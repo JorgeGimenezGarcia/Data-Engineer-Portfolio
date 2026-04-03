@@ -1,0 +1,55 @@
+version: '3.7'
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Custom Data Engineer Image for Airflow, dbt, and Python scripts
+  airflow-data-engineer:
+    build: .
+    image: custom-airflow-de:latest
+    container_name: airflow_de_container
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      # Airflow specific environment variables
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__WEBSERVER__SECRET_KEY=super-secret-key-for-portfolio
+      - AIRFLOW__API__AUTH_BACKENDS=airflow.api.auth.backends.basic_auth
+      
+      # Snowflake Connection details (CRITICAL: Replace with your actual credentials)
+      - SNOWFLAKE_USER=YOUR_SNOWFLAKE_USER
+      - SNOWFLAKE_PASSWORD=YOUR_SNOWFLAKE_PASSWORD
+      - SNOWFLAKE_ACCOUNT=YOUR_SNOWFLAKE_ACCOUNT_LOCATOR
+      - SNOWFLAKE_WAREHOUSE=YOUR_SNOWFLAKE_WAREHOUSE
+      - SNOWFLAKE_ROLE=YOUR_SNOWFLAKE_ROLE
+    
+    volumes:
+      # Mount folders to enable live code changes without rebuilding the image
+      - ./dags:/opt/airflow/dags
+      - ./dbt_project:/opt/airflow/dbt_project
+      - ./pipelines:/opt/airflow/pipelines
+      - ./infra:/opt/airflow/infra
+    
+    ports:
+      - "8080:8080" # Airflow UI
+    
+    # Initialize the DB, create an admin user, and start the webserver
+    command: bash -c "airflow db init && airflow users create -u admin -f Admin -l User -r Admin -e admin@example.com -p admin -r Admin && airflow webserver"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 5

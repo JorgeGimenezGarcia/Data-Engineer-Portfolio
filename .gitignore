@@ -1,0 +1,48 @@
+# -----------------
+# PYTHON ENVIRONMENT
+# -----------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv
+venv
+env
+
+# -----------------
+# OPERATING SYSTEM
+# -----------------
+.DS_Store
+Thumbs.db
+
+# -----------------
+# IDE FILES (Optional, adjust as needed)
+# -----------------
+.idea/
+.vscode/
+
+# -----------------
+# DOCKER / ORCHESTRATION
+# -----------------
+# Ignore Airflow metadata files (if running locally without docker-compose)
+airflow.cfg
+unittests.cfg
+
+# Ignore any local Airflow logs or data folders created outside of Docker
+logs/
+data/
+
+# -----------------
+# DBT ARTIFACTS
+# -----------------
+# The target folder contains compiled SQL and manifest files (large, auto-generated)
+dbt_project/target/
+dbt_project/dbt_packages/
+
+# -----------------
+# CREDENTIALS / SENSITIVE DATA
+# -----------------
+# If you created a local .env file instead of using docker-compose environment vars
+.env
+*.key
+*.pem

@@ -1,0 +1,58 @@
+# This workflow runs on every push or pull request to the 'main' branch
+name: Data Pipeline CI (Linting & Validation)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  python-linting:
+    name: 1. Python Linting (Black)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: pip install black
+      
+      - name: Run Black formatter check
+        # The --check flag doesn't reformat, it just fails if the code is NOT formatted
+        run: black --check .
+
+  dbt-validation:
+    name: 2. dbt Project Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions:checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies and validate dbt project
+        # Step 1: Install only the dbt adapter (dbt-snowflake) via pip
+        # Step 2: Install the dbt package dependencies (dbt-expectations) via 'dbt deps'
+        # Step 3: Parse the project
+        run: |
+          pip install dbt-snowflake
+          cd ./dbt_project
+          dbt deps
+          dbt parse --profiles-dir .
+        
+        env:
+          # CRITICAL: These secrets are still needed for 'dbt parse' to find the configuration
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+          SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}

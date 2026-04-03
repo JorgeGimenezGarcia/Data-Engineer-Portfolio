@@ -1,0 +1,28 @@
+version: 2
+
+sources:
+  # The source name, must match the 1st argument in {{ source() }}
+  - name: DE_PORTFOLIO_DB
+    database: DE_PORTFOLIO_DB
+    schema: STAGING
+    description: "Raw data source loaded by the Python ingestion script."
+    
+    tables:
+      - name: RAW_SALES_DATA
+        description: "Raw simulated sales data (from APIs, SAP, etc.)"
+        columns:
+          - name: id
+            description: "The primary key of the sale."
+            tests:
+              - unique
+              - not_null
+
+models:
+  - name: stg_sales
+    description: "Staging model for sales. Basic cleanup and renaming."
+    columns:
+      - name: sale_id
+        description: "The primary key of the sale."
+        tests:
+          - unique
+          - not_null
